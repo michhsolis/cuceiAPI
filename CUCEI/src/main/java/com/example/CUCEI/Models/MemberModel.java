@@ -3,17 +3,17 @@ package com.example.CUCEI.Models;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "estudiantes")
-public class StudentModel {
+@Table(name = "GymMembers")
+public class MemberModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, unique = true)
     private Long id;
-    private String code;
+    private Integer code;
     private String name;
     private String email;
-    private String degree;
-    private Double score;
+    private String date;
+    private String plan;
 
     public Long getId() {
         return id;
@@ -21,14 +21,6 @@ public class StudentModel {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     public String getName() {
@@ -39,6 +31,14 @@ public class StudentModel {
         this.name = name;
     }
 
+    public Integer getCode() {
+        return code;
+    }
+
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -47,19 +47,19 @@ public class StudentModel {
         this.email = email;
     }
 
-    public String getDegree() {
-        return degree;
+    public String getDate() {
+        return date;
     }
 
-    public void setDegree(String degree) {
-        this.degree = degree;
+    public void setDate(String date) {
+        this.date = date;
     }
 
-    public Double getScore() {
-        return score;
+    public String getPlan() {
+        return plan;
     }
 
-    public void setScore(Double score) {
-        this.score = score;
+    public void setPlan(String plan) {
+        this.plan = plan;
     }
 }

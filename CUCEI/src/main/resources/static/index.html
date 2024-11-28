@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consulta de Inscripción de Miembros de un Gimnasio</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</head>
+<body>
+<h1 style="text-align: center;">All members</h1>
+<section id="register-section">
+    <form id="save-member-form" style="padding: 10px;">
+        <div class="mb-3">
+            <label for="input-code" class="form-label">Code:</label>
+            <input type="text" class="form-control" id="input-code">
+        </div>
+        <div class="mb-3">
+            <label for="input-name" class="form-label">Name:</label>
+            <input type="text" class="form-control" id="input-name" >
+        </div>
+        <div class="mb-3">
+            <label for="input-date" class="form-label">Date:</label>
+            <input type="text" class="form-control" id="input-date" >
+        </div>
+        <div class="mb-3">
+            <label for="input-email" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="input-email" aria-describedby="emailHelp">
+        </div>
+        <div class="mb-3">
+            <label for="input-plan" class="form-label">Plan:</label>
+            <input type="text" class="form-control" id="input-plan">
+        </div>
+
+        <button type="submit" onclick="saveMember()" class="btn btn-success">Save member</button>
+    </form>
+</section>
+
+<table class="table table-dark" id="membersTable">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">id</th>
+        <th scope="col">code</th>
+        <th scope="col">name</th>
+        <th scope="col">email</th>
+        <th scope="col">date</th>
+        <th scope="col">plan</th>
+        <th scope="col">options</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+<script type="text/javascript">
+    //call URL API
+    const urlAPI = "http://localhost:8080/GymMembers";
+
+    let isEditing = false; // Bandera para controlar la edición
+
+    async function fillTable() {
+        try {
+            const response = await fetch(urlAPI);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const members = await response.json();
+            const tableBody = document.querySelector('#membersTable tbody');
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            // Populate the table
+            members.forEach(member => {
+                const row = document.createElement('tr');
+                const idCell = document.createElement('td');
+                const codeCell = document.createElement('td');
+                const nameCell = document.createElement('td');
+                const emailCell = document.createElement('td');
+                const dateCell = document.createElement('td');
+                const planCell = document.createElement('td');
+                const buttonCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                const editButton = document.createElement('button');
+
+                idCell.textContent = member.id;
+                idCell.id = "id" + member.code;
+                codeCell.textContent = member.code;
+                codeCell.id = "code" + member.code;
+                nameCell.textContent = member.name;
+                nameCell.id = "name" + member.code;
+                emailCell.textContent = member.email;
+                emailCell.id = "email" + member.code;
+                dateCell.textContent = member.date;
+                dateCell.id = "date" + member.code;
+                planCell.textContent = member.plan;
+                planCell.id = "plan" + member.code;
+                row.id = "row" + member.code;
+
+                editButton.id = "editButton" + member.code;
+
+                deleteButton.textContent = "delete";
+                deleteButton.className = "btn btn-danger";
+                editButton.textContent = "edit";
+                editButton.className = "btn btn-warning";
+
+                buttonCell.appendChild(deleteButton);
+                buttonCell.appendChild(editButton);
+                row.appendChild(idCell);
+                row.appendChild(codeCell);
+                row.appendChild(nameCell);
+                row.appendChild(emailCell);
+                row.appendChild(dateCell);
+                row.appendChild(planCell);
+                row.appendChild(buttonCell);
+
+                tableBody.appendChild(row);
+
+                deleteButton.addEventListener("click", function () {
+                    deleteMember(member.code);
+                }, false);
+
+                editButton.addEventListener("click", function () {
+                    updateMember(member.code);
+                }, false);
+            });
+        } catch (error) {
+            console.error('There was a problem with the fetch operation:', error);
+        }
+    }
+
+    window.onload = fillTable;
+
+    function updateMember(memberCode) {
+        if (isEditing) {
+            alert("Ya hay una edición en curso. Por favor, guarde antes de continuar.");
+            return;
+        }
+
+        isEditing = true; // Activar la bandera de edición
+
+        const editRow = document.getElementById("row" + memberCode);
+        const idCell = document.getElementById("id" + memberCode);
+        const codeCell = document.getElementById("code" + memberCode);
+        const nameCell = document.getElementById("name" + memberCode);
+        const emailCell = document.getElementById("email" + memberCode);
+        const dateCell = document.getElementById("date" + memberCode);
+        const planCell = document.getElementById("plan" + memberCode);
+        const editButton = document.getElementById("editButton" + memberCode);
+
+        editRow.className = "table table-striped";
+
+        codeCell.setAttribute("contenteditable", true);
+        nameCell.setAttribute("contenteditable", true);
+        emailCell.setAttribute("contenteditable", true);
+        dateCell.setAttribute("contenteditable", true);
+        planCell.setAttribute("contenteditable", true);
+
+        editButton.textContent = "Save";
+        editButton.className = "btn btn-primary";
+
+        editButton.onclick = async function () {
+            await saveMemberUpdated(
+                idCell.innerHTML,
+                memberCode,
+                codeCell.innerHTML,
+                nameCell.innerHTML,
+                emailCell.innerHTML,
+                dateCell.innerHTML,
+                planCell.innerHTML
+            );
+            isEditing = false; // Liberar la bandera después de guardar
+        };
+    }
+
+    async function saveMemberUpdated(memberId, previousCode, updatedCode, updatedName, updatedEmail, updatedDate, updatedPlan) {
+        const member = {
+            id: memberId,
+            code: updatedCode,
+            name: updatedName,
+            date: updatedDate,
+            email: updatedEmail,
+            plan: updatedPlan,
+        };
+
+        const baseURL = "http://localhost:8080/GymMembers";
+        try {
+            const response = await fetch(`${baseURL}/updateMemberByCode=${previousCode}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                },
+                body: JSON.stringify(member),
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            fillTable(); // Recargar la tabla
+            alert("Los cambios se han guardado correctamente.");
+        } catch (error) {
+            console.error("Hubo un problema al guardar los cambios:", error);
+            alert("Ocurrió un error al guardar los cambios. Inténtalo de nuevo.");
+        }
+    }
+
+    async function deleteMember(memberCode) {
+        try {
+            const baseURL = "http://localhost:8080/GymMembers";
+            const response = await fetch(`${baseURL}/deleteMemberByCode=${memberCode}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            fillTable(); // Re-fetch and refresh the table
+        } catch (error) {
+            console.error("There was a problem with the delete operation:", error);
+        }
+    }
+
+    async function saveMember() {
+        const inputCode = document.getElementById("input-code").value.trim();
+        const inputName = document.getElementById("input-name").value.trim();
+        const inputDate = document.getElementById("input-date").value.trim();
+        const inputEmail = document.getElementById("input-email").value.trim();
+        const inputPlan = document.getElementById("input-plan").value.trim();
+
+        //El .trim() nos ayuda a eliminar los espacios vacios de los textos al inicio y al final
+
+        // Validaciones
+        if (!inputCode) {
+            alert("The 'Code' field is required.");
+            return;
+        }
+        if (!inputName) {
+            alert("The 'Name' field is required.");
+            return;
+        }
+        if (!inputDate) {
+            alert("The 'Date' field is required.");
+            return;
+        }
+        if (!inputPlan) {
+            alert("The 'Plan' field is required.");
+            return;
+        }
+        if (!inputEmail) {
+            alert("The 'Email' field is required.");
+            return;
+        }
+
+        const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+        if (!emailRegex.test(inputEmail)) {
+        alert("Please provide a valid email address.");
+        return;
+        }
+
+        const member = {
+            code: inputCode,
+            name: inputName,
+            date: inputDate,
+            email: inputEmail,
+            plan: inputPlan,
+        };
+
+        try {
+            const response = await fetch(urlAPI, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                },
+                body: JSON.stringify(member),
+            });
+
+            if (response.ok) {
+                document.querySelector("#save-member-form").reset();
+                fillTable();
+            } else {
+                alert("Ocurrió un error al guardar al gym member.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+</script>
+
+</body>
+</html>
+
